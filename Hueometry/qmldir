@@ -1,0 +1,26 @@
+module Hueometry
+singleton Theme 1.0 Theme.qml
+Board 1.0 Board.qml
+Card 1.0 Card.qml
+FreePlay 1.0 FreePlay.qml
+Game 1.0 Game.qml
+Help 1.0 Help.qml
+Icon 1.0 Icon.qml
+Jungle 1.0 Jungle.qml
+Map 1.0 Map.qml
+Menu 1.0 Menu.qml
+Orb 1.0 Orb.qml
+Pillar 1.0 Pillar.qml
+Play 1.0 Play.qml
+Results 1.0 Results.qml
+RoundButton 1.0 RoundButton.qml
+Settings 1.0 Settings.qml
+Sound 1.0 Sound.qml
+Symbol 1.0 Symbol.qml
+TextButton 1.0 TextButton.qml
+Title 1.0 Title.qml
+SoundBank 1.0 SoundBank.qml
+Leaf 1.0 Leaf.qml
+Friend 1.0 Friend.qml
+Sparkles 1.0 Sparkles.qml
+Scroller 1.0 Scroller.qml

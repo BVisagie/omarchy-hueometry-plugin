@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.bvisagie.hueometry",
+  "name": "Hueometry",
+  "version": "0.1.0",
+  "author": "Bernard Visagie",
+  "license": "MIT",
+  "description": "A colour-sorting puzzle for children and families, set in the Lost Jungle Temple, with a formally verified rules engine.",
+  "kinds": ["overlay", "bar-widget"],
+  "entryPoints": {
+    "overlay": "Overlay.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Hueometry",
+    "description": "Opens the Hueometry puzzle.",
+    "category": "Games",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
