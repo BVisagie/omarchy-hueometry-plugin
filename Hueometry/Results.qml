@@ -31,6 +31,12 @@ Item {
       if (cursor === 0) leave(); else if (cursor === 2 && hasNext) next(); else replay()
       return true
     case Qt.Key_Escape: leave(); return true
+    // the words above the buttons, when the card scrolls
+    case Qt.Key_PageUp: case Qt.Key_PageDown: {
+      const step = (event.key === Qt.Key_PageUp ? -1 : 1) * cardScroll.height * 0.8
+      cardScroll.contentY = Math.max(0, Math.min(cardScroll.contentHeight - cardScroll.height, cardScroll.contentY + step))
+      return true
+    }
     }
     return false
   }
@@ -46,13 +52,21 @@ Item {
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 32)
     // as tall as its words, or the window, scrolling inside when taller
     height: Math.min(column.implicitHeight + Theme.em * 3, root.height - Theme.em * 2)
+    // its words do not fit: the view gives up a strip at its foot to the cue
+    readonly property bool overflows: column.implicitHeight + Theme.em * 3 > root.height - Theme.em * 2
     scale: root.visible ? 1 : 0.85
     Behavior on scale { NumberAnimation { duration: Theme.ms(260); easing.type: Easing.OutBack } }
+
+    // the wheel anywhere on the card (its padding and the cue strips too)
+    // scrolls its words
+    WheelScroll { anchors.fill: parent; view: cardScroll }
 
     Flickable {
       id: cardScroll
       anchors.fill: parent
       anchors.margins: Theme.em * 1.5
+      anchors.topMargin: card.overflows ? Theme.em * 2.1 : Theme.em * 1.5
+      anchors.bottomMargin: card.overflows ? Theme.em * 2.1 : Theme.em * 1.5
       contentWidth: width
       contentHeight: column.implicitHeight
       clip: true
@@ -145,6 +159,20 @@ Item {
         TextButton { id: nextButton; text: qsTr("Next"); icon: "play"; wide: Theme.em * 8; primary: true; visible: root.hasNext; focused: root.cursor === 2; onActivated: root.next() }
       }
     }
+    }
+    // there is more above or below (the focused button is kept in view): say so
+    MoreCue {
+      up: true
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: Theme.em * 0.4
+      visible: card.overflows && !cardScroll.atYBeginning
+    }
+    MoreCue {
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em * 0.4
+      visible: card.overflows && !cardScroll.atYEnd
     }
   }
 

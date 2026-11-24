@@ -24,15 +24,18 @@ Item {
     return false
   }
 
-  onCursorChanged: scroller.show(buttons.itemAt(cursor))
+  // the first button brings the title back into view too
+  onCursorChanged: cursor === 0 ? scroller.toTop() : scroller.show(buttons.itemAt(cursor))
 
+  // sized so the title and all five buttons fit 34em, the height of any
+  // wide screen at 100% (docs/decisions.md)
   Scroller {
     id: scroller
     anchors.fill: parent
-    anchors.margins: Theme.em
+    anchors.margins: Theme.em * 0.5
   Column {
     anchors.horizontalCenter: parent.horizontalCenter
-    spacing: Theme.em * 1.2
+    spacing: Theme.em
     Title {
       anchors.horizontalCenter: parent.horizontalCenter
       size: Math.min(menu.width / 7, Theme.em * 5.5)
@@ -47,7 +50,7 @@ Item {
       style: Text.Raised
       styleColor: "#A0000000"
     }
-    Item { width: 1; height: Theme.em }
+    Item { width: 1; height: Theme.em * 0.5 }
     Repeater {
       id: buttons
       model: menu.items.length

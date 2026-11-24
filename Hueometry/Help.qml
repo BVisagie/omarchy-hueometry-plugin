@@ -53,6 +53,10 @@ Item {
       font.pixelSize: Theme.em * 1.8
       font.bold: true
     }
+    // the wheel anywhere on the card (its padding and the cue strip too)
+    // scrolls the keys
+    WheelScroll { anchors.fill: parent; view: rows }
+
     Flickable {
       id: rows
       anchors.top: title.bottom
@@ -86,15 +90,11 @@ Item {
     }
     }
     // there is more below: say so
-    Text {
+    MoreCue {
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: parent.bottom
-      anchors.bottomMargin: Theme.em * 0.4
+      anchors.bottomMargin: Theme.em * 0.25
       visible: rows.interactive && !rows.atYEnd
-      text: qsTr("▾ more")
-      color: Theme.gold
-      font.family: Theme.font
-      font.pixelSize: Theme.em * 0.85
     }
   }
 }

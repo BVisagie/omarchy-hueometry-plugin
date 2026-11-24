@@ -82,16 +82,37 @@ Item {
     id: card
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    anchors.topMargin: Theme.em * 6
+    // just under the title, so every row fits 34em, the height of any wide
+    // screen at 100% (docs/decisions.md); when the card is so wide (for the
+    // window) that it reaches the Back button's column, below its label
+    readonly property bool besideBack: (root.width - width) / 2 >= Theme.em * 4.6
+    readonly property real cardTop: besideBack ? Theme.em * 4.6 : Theme.em * 6
+    anchors.topMargin: cardTop
     width: Math.min(parent.width - Theme.em * 4, Theme.em * 36)
-    // scrolls when the interface is made large on a small screen
-    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - Theme.em * 7)
+    // scrolls when the interface is made large on a small screen, or when
+    // the sound note is shown
+    height: Math.min(list.implicitHeight + Theme.em * 2.4, root.height - cardTop - Theme.em)
+    // the rows do not fit: the list gives up a strip at its foot to the cue
+    readonly property bool overflows: list.implicitHeight + Theme.em * 2.4 > root.height - cardTop - Theme.em
+
+    // the wheel anywhere on the card (its padding and the cue strips too)
+    // scrolls its list
+    WheelScroll { anchors.fill: parent; view: scroller }
+
+    // there is more below: say so
+    MoreCue {
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: Theme.em * 0.35
+      visible: card.overflows && !scroller.atYEnd
+    }
 
     Flickable {
       id: scroller
       objectName: "scroller"
       anchors.fill: parent
       anchors.margins: Theme.em * 1.2
+      anchors.bottomMargin: card.overflows ? Theme.em * 2.0 : Theme.em * 1.2
       clip: true
       contentHeight: list.implicitHeight
       boundsBehavior: Flickable.StopAtBounds
@@ -122,7 +143,7 @@ Item {
           required property int index
           readonly property var r: root.rows[index]
           width: list.width
-          height: r.kind === "layout" ? Theme.em * 6.5 : Theme.em * 2.9
+          height: r.kind === "layout" ? Theme.em * 6.5 : Theme.em * 2.6
           radius: Theme.em * 0.6
           color: root.cursor === index ? Qt.alpha(Theme.gold, 0.16) : "transparent"
           border.color: root.cursor === index ? Theme.glow : "transparent"
