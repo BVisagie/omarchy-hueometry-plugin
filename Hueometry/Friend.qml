@@ -2,7 +2,8 @@ import QtQuick
 import QtQuick.Shapes
 
 // An animal friend who pops up from the corner to cheer a solved puzzle: a
-// toucan in some areas, a tree frog in others. Drawn, not pictured.
+// toucan in the forest, a tree frog by the water, a monkey in the temple's
+// stones. Drawn, not pictured.
 Item {
   id: root
   property string kind: "toucan"
@@ -44,7 +45,7 @@ Item {
 
     Loader {
       anchors.fill: parent
-      sourceComponent: root.kind === "frog" ? frog : toucan
+      sourceComponent: ({ frog: frog, monkey: monkey })[root.kind] ?? toucan
     }
   }
 
@@ -83,6 +84,123 @@ Item {
       // feet
       Rectangle { x: root.size * 0.36; y: root.size * 0.82; width: root.size * 0.06; height: root.size * 0.06; radius: width / 2; color: "#4C6A9A" }
       Rectangle { x: root.size * 0.46; y: root.size * 0.82; width: root.size * 0.06; height: root.size * 0.06; radius: width / 2; color: "#4C6A9A" }
+    }
+  }
+
+  Component {
+    id: monkey
+    Item {
+      id: m
+      readonly property real s: root.size
+      readonly property color fur: "#7A4E2C"
+      readonly property color furDark: "#5A361C"
+      readonly property color face: "#E8C9A0"
+      // it waves while it cheers
+      property real wave: 0
+      SequentialAnimation on wave {
+        running: root.cheering && !Theme.reducedMotion
+        loops: Animation.Infinite
+        NumberAnimation { to: 14; duration: Theme.ms(260); easing.type: Easing.InOutSine }
+        NumberAnimation { to: -8; duration: Theme.ms(260); easing.type: Easing.InOutSine }
+      }
+      // a curling tail
+      Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+          strokeColor: m.furDark
+          strokeWidth: m.s * 0.05
+          capStyle: ShapePath.RoundCap
+          fillColor: "transparent"
+          startX: m.s * 0.34; startY: m.s * 0.76
+          PathCubic { x: m.s * 0.1; y: m.s * 0.5; control1X: m.s * 0.12; control1Y: m.s * 0.9; control2X: m.s * 0.02; control2Y: m.s * 0.62 }
+          PathCubic { x: m.s * 0.2; y: m.s * 0.5; control1X: m.s * 0.14; control1Y: m.s * 0.42; control2X: m.s * 0.22; control2Y: m.s * 0.44 }
+        }
+      }
+      // feet gripping the branch
+      Repeater {
+        model: [0.33, 0.55]
+        Rectangle {
+          required property real modelData
+          x: m.s * modelData; y: m.s * 0.8; width: m.s * 0.13; height: m.s * 0.08; radius: height / 2
+          color: m.furDark
+        }
+      }
+      // body and belly
+      Rectangle {
+        x: m.s * 0.3; y: m.s * 0.42; width: m.s * 0.4; height: m.s * 0.42; radius: width / 2
+        gradient: Gradient { GradientStop { position: 0.0; color: Qt.lighter(m.fur, 1.15) } GradientStop { position: 1.0; color: m.furDark } }
+      }
+      Rectangle { x: m.s * 0.39; y: m.s * 0.53; width: m.s * 0.22; height: m.s * 0.27; radius: width / 2; color: Qt.darker(m.face, 1.08) }
+      // the arm holding on
+      Rectangle {
+        x: m.s * 0.27; y: m.s * 0.5; width: m.s * 0.09; height: m.s * 0.34; radius: width / 2
+        rotation: 12
+        color: m.fur
+      }
+      // ears, then the head
+      Repeater {
+        model: [0.24, 0.65]
+        Rectangle {
+          required property real modelData
+          x: m.s * modelData; y: m.s * 0.2; width: m.s * 0.12; height: width; radius: width / 2
+          color: m.fur
+          Rectangle { anchors.centerIn: parent; width: parent.width * 0.55; height: width; radius: width / 2; color: m.face }
+        }
+      }
+      Rectangle {
+        x: m.s * 0.31; y: m.s * 0.1; width: m.s * 0.38; height: m.s * 0.36; radius: width / 2
+        gradient: Gradient { GradientStop { position: 0.0; color: Qt.lighter(m.fur, 1.2) } GradientStop { position: 1.0; color: m.fur } }
+      }
+      // the face: a pale mask round the eyes, and a muzzle
+      Repeater {
+        model: [0.36, 0.5]
+        Rectangle {
+          required property real modelData
+          x: m.s * modelData; y: m.s * 0.18; width: m.s * 0.14; height: m.s * 0.15; radius: width / 2
+          color: m.face
+        }
+      }
+      Rectangle { x: m.s * 0.38; y: m.s * 0.27; width: m.s * 0.24; height: m.s * 0.15; radius: height / 2; color: m.face }
+      Repeater {
+        model: [0.415, 0.535]
+        Rectangle {
+          required property real modelData
+          x: m.s * modelData; y: m.s * 0.22; width: m.s * 0.05; height: width * 1.15; radius: width / 2
+          color: "#20140C"
+          Rectangle { x: parent.width * 0.55; y: parent.height * 0.18; width: parent.width * 0.3; height: width; radius: width / 2; color: "#FFFFFF" }
+        }
+      }
+      // nostrils and a grin
+      Repeater {
+        model: [0.475, 0.51]
+        Rectangle {
+          required property real modelData
+          x: m.s * modelData; y: m.s * 0.3; width: m.s * 0.018; height: width; radius: width / 2
+          color: "#5A361C"
+        }
+      }
+      Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+          strokeColor: "#5A361C"
+          strokeWidth: Math.max(2, m.s * 0.016)
+          capStyle: ShapePath.RoundCap
+          fillColor: "transparent"
+          startX: m.s * 0.43; startY: m.s * 0.355
+          PathQuad { x: m.s * 0.57; y: m.s * 0.355; controlX: m.s * 0.5; controlY: m.s * 0.41 }
+        }
+      }
+      // the waving arm, with its hand
+      Item {
+        x: m.s * 0.62; y: m.s * 0.2
+        width: m.s * 0.1; height: m.s * 0.32
+        transformOrigin: Item.Bottom
+        rotation: 28 + m.wave
+        Rectangle { anchors.fill: parent; radius: width / 2; color: m.fur }
+        Rectangle { anchors.horizontalCenter: parent.horizontalCenter; y: -height * 0.3; width: parent.width * 1.25; height: width; radius: width / 2; color: Qt.darker(m.face, 1.05) }
+      }
     }
   }
 

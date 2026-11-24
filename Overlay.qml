@@ -54,7 +54,7 @@ Item {
     id: gameHost
     readonly property string kind: "plugin"
     readonly property bool canFullscreen: false
-    // "0.1.0", or "0.1.0 · 9323709" for a build that is not the release
+    // "0.2.0", or "0.2.0 · 9323709" for a build that is not the release
     readonly property string version: root.manifest && root.manifest.version
       ? root.manifest.version + (root.buildId ? " · " + root.buildId : "") : ""
     function file(name) {

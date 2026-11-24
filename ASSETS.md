@@ -1,8 +1,8 @@
 # Assets
 
-Every asset in Hueometry is this project's own work, licensed CC BY-SA 4.0
-(see LICENSE-ASSETS), © 2026 Bernard Visagie and the Hueometry contributors.
-There are no third-party images, sounds or fonts.
+Every image and sound in Hueometry is this project's own work, licensed
+CC BY-SA 4.0 (see LICENSE-ASSETS), © 2026 Bernard Visagie and the Hueometry
+contributors. The one third-party asset is the typeface (below).
 
 ## Pictures
 
@@ -26,13 +26,28 @@ with fixed random seeds: no samples or recordings.
 | `qml/Hueometry/sounds/ambience-forest.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-river.ogg` | ambience loop |
 | `qml/Hueometry/sounds/ambience-temple.ogg` | ambience loop |
+| `qml/Hueometry/sounds/complete-0.wav` | effect |
+| `qml/Hueometry/sounds/complete-1.wav` | effect |
+| `qml/Hueometry/sounds/complete-2.wav` | effect |
+| `qml/Hueometry/sounds/complete-3.wav` | effect |
+| `qml/Hueometry/sounds/complete-4.wav` | effect |
+| `qml/Hueometry/sounds/complete-5.wav` | effect |
+| `qml/Hueometry/sounds/critter-bird-1.wav` | critter |
+| `qml/Hueometry/sounds/critter-bird-2.wav` | critter |
+| `qml/Hueometry/sounds/critter-bird-3.wav` | critter |
+| `qml/Hueometry/sounds/critter-drip-1.wav` | critter |
+| `qml/Hueometry/sounds/critter-drip-2.wav` | critter |
+| `qml/Hueometry/sounds/critter-frog.wav` | critter |
+| `qml/Hueometry/sounds/critter-plop.wav` | critter |
 | `qml/Hueometry/sounds/drop.wav` | effect |
 | `qml/Hueometry/sounds/hint.wav` | effect |
 | `qml/Hueometry/sounds/lift-1.wav` | effect |
 | `qml/Hueometry/sounds/lift-2.wav` | effect |
 | `qml/Hueometry/sounds/lift-3.wav` | effect |
 | `qml/Hueometry/sounds/music-menu.ogg` | music loop |
-| `qml/Hueometry/sounds/music-play.ogg` | music loop |
+| `qml/Hueometry/sounds/music-forest.ogg` | music loop |
+| `qml/Hueometry/sounds/music-river.ogg` | music loop |
+| `qml/Hueometry/sounds/music-temple.ogg` | music loop |
 | `qml/Hueometry/sounds/place-0.wav` | effect |
 | `qml/Hueometry/sounds/place-1.wav` | effect |
 | `qml/Hueometry/sounds/place-2.wav` | effect |
@@ -47,4 +62,14 @@ with fixed random seeds: no samples or recordings.
 
 ## Typeface
 
-The game uses the system's sans-serif font; it ships none.
+| File | Source | Licence |
+|---|---|---|
+| `qml/Hueometry/fonts/Nunito-Regular.ttf` | Nunito, © 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito) | SIL Open Font License 1.1 (LICENSE-OFL) |
+| `qml/Hueometry/fonts/Nunito-Bold.ttf` | as above | as above |
+| `qml/Hueometry/fonts/Nunito-Italic.ttf` | as above | as above |
+
+The three files are static instances (weights 400, 700 and italic 400) of
+the variable `Nunito[wght].ttf` and `Nunito-Italic[wght].ttf`, made with
+fontTools' `varLib.instancer` and subset with `pyftsubset` to Latin and the
+punctuation the game shows. Characters Nunito lacks (the arrows) fall back
+to the system font.

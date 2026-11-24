@@ -35,13 +35,15 @@ Item {
     return false
   }
 
-  Rectangle { anchors.fill: parent; color: "#66000000" }
+  Rectangle { anchors.fill: parent; color: "#8C000000" }
   MouseArea { anchors.fill: parent }
 
   Card {
     id: card
     anchors.centerIn: parent
-    width: Math.min(parent.width - Theme.em * 4, Theme.em * 30)
+    // wide enough for its three buttons in one row (8 + 10 + 8 em and two
+    // gaps, inside 1.5 em margins); narrow windows stack them
+    width: Math.min(parent.width - Theme.em * 4, Theme.em * 32)
     // as tall as its words, or the window, scrolling inside when taller
     height: Math.min(column.implicitHeight + Theme.em * 3, root.height - Theme.em * 2)
     scale: root.visible ? 1 : 0.85

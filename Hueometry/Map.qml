@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import "js/session.mjs" as S
 import "js/store.mjs" as Store
 
@@ -100,35 +101,106 @@ Item {
         readonly property int done: index === 0 ? Store.doneIn(map.game.progress, "tutorial", 3) : Store.doneIn(map.game.progress, S.AREAS[index - 1], map.perArea)
         width: Theme.em * 13
         height: Theme.em * 7.6
+        readonly property int total: index === 0 ? 3 : map.perArea
         Card {
+          id: frame
           anchors.fill: parent
           border.color: map.area === tile.index ? Theme.glow : Theme.cardEdge
           border.width: map.area === tile.index ? Math.max(3, Theme.em * 0.2) : Math.max(2, Theme.em * 0.12)
-          opacity: tile.open ? 1 : 0.55
+        }
+        // a small, still picture of the area: lit once it is all solved,
+        // dimmed while it is locked
+        Item {
+          id: picture
+          anchors.fill: parent
+          anchors.margins: Theme.em * 0.35
+          clip: true
+          Jungle {
+            anchors.fill: parent
+            area: tile.index
+            still: true
+            restored: tile.done === tile.total
+            // drawn once into a texture: it never moves
+            layer.enabled: true
+          }
+          // shade under the words
+          Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: parent.height * 0.66
+            gradient: Gradient {
+              GradientStop { position: 0.0; color: "transparent" }
+              GradientStop { position: 0.45; color: "#90000000" }
+              GradientStop { position: 1.0; color: "#E0000000" }
+            }
+          }
+          Rectangle { anchors.fill: parent; color: "#80000000"; visible: !tile.open }
+        }
+        // round the picture's corners in the card's own colour
+        Repeater {
+          model: 4
+          Shape {
+            id: corner
+            required property int index
+            readonly property real r: frame.radius * 0.8
+            width: r; height: r
+            x: index === 1 || index === 2 ? picture.x + picture.width - r : picture.x
+            y: index >= 2 ? picture.y + picture.height - r : picture.y
+            rotation: index * 90
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+              strokeColor: "transparent"
+              fillColor: Theme.card
+              startX: 0; startY: 0
+              PathLine { x: corner.r; y: 0 }
+              PathArc { x: 0; y: corner.r; radiusX: corner.r; radiusY: corner.r; direction: PathArc.Counterclockwise }
+              PathLine { x: 0; y: 0 }
+            }
+          }
+        }
+        // the card's inner line, over the picture
+        Rectangle {
+          anchors.fill: picture
+          radius: frame.radius * 0.8
+          color: "transparent"
+          border.color: Qt.alpha(Theme.gold, 0.25)
+          border.width: 1
+        }
+        Icon {
+          anchors.right: picture.right
+          anchors.top: picture.top
+          anchors.margins: Theme.em * 0.45
+          kind: !tile.open ? "lock" : tile.done === tile.total ? "check" : "play"
+          size: Theme.em * 1.3
         }
         Column {
-          anchors.centerIn: parent
-          spacing: Theme.em * 0.4
+          anchors.left: picture.left
+          anchors.right: picture.right
+          anchors.bottom: picture.bottom
+          anchors.margins: Theme.em * 0.55
+          spacing: Theme.em * 0.1
           Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: tile.width - Theme.em
-            horizontalAlignment: Text.AlignHCenter
+            width: parent.width
             wrapMode: Text.WordWrap
             maximumLineCount: 2
             text: map.areas[tile.index].name
             color: Theme.ink
             font.family: Theme.font
-            font.pixelSize: Theme.em * 1.15
+            font.pixelSize: Theme.em * 1.1
             font.bold: true
+            style: Text.Raised
+            styleColor: "#C0000000"
           }
           Text {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: tile.open ? qsTr("%1 of %2 solved").arg(tile.done).arg(tile.index === 0 ? 3 : map.perArea) : qsTr("Solve 5 in the area before")
-            color: Theme.inkSoft
+            width: parent.width
+            wrapMode: Text.WordWrap
+            text: tile.open ? qsTr("%1 of %2 solved").arg(tile.done).arg(tile.total) : qsTr("Solve 5 in the area before")
+            color: Theme.ink
+            opacity: 0.85
             font.family: Theme.font
-            font.pixelSize: Theme.em * 0.95
+            font.pixelSize: Theme.em * 0.9
           }
-          Icon { anchors.horizontalCenter: parent.horizontalCenter; kind: tile.open ? (tile.done === (tile.index === 0 ? 3 : map.perArea) ? "check" : "play") : "lock"; size: Theme.em * 1.6 }
         }
         MouseArea {
           anchors.fill: parent

@@ -26,8 +26,19 @@ Item {
 
   transform: Translate { x: root.shake }
 
+  // a hinted pillar's light breathes, so the eye finds it
+  property real pulse: 1
+  SequentialAnimation on pulse {
+    running: root.hinted && !Theme.reducedMotion
+    loops: Animation.Infinite
+    NumberAnimation { to: 0.4; duration: Theme.ms(700); easing.type: Easing.InOutSine }
+    NumberAnimation { to: 1; duration: Theme.ms(700); easing.type: Easing.InOutSine }
+  }
+  onHintedChanged: if (!hinted) pulse = 1
+
   // where a legal move may land: a warm light rising from the base
   Rectangle {
+    id: glow
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
     width: root.w * 1.9
@@ -35,10 +46,12 @@ Item {
     radius: width / 2
     opacity: root.target || root.hinted ? 1 : 0
     Behavior on opacity { NumberAnimation { duration: Theme.ms(180) } }
+    // the hint keeps breathing, even once its orb is lifted
+    readonly property real k: root.hinted ? root.pulse : 1
     gradient: Gradient {
       GradientStop { position: 0.0; color: "transparent" }
-      GradientStop { position: 0.6; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.18) }
-      GradientStop { position: 1.0; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.42) }
+      GradientStop { position: 0.6; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.18 * glow.k) }
+      GradientStop { position: 1.0; color: Qt.alpha(root.hinted ? "#FFFFFF" : Theme.glow, 0.42 * glow.k) }
     }
   }
 

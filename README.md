@@ -48,3 +48,4 @@ Your progress stays in `~/.local/share/hueometry` and settings in
 ## Licences
 
 Code: MIT (LICENSE). Art and audio: CC BY-SA 4.0 (LICENSE-ASSETS, ASSETS.md).
+The Nunito typeface: SIL Open Font License 1.1 (LICENSE-OFL).

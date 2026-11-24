@@ -35,6 +35,8 @@ Item {
   // keep the chosen row in view
   onCursorChanged: reveal()
   function reveal() {
+    // back on the first row: right to the top, so the note above it shows
+    if (cursor === 0) { scroller.contentY = 0; return }
     // (the Repeater is a child of the column too, so find the row by index)
     const row = list.children.find(c => c.index === cursor && c.r !== undefined)
     if (!row) return
@@ -97,6 +99,21 @@ Item {
       id: list
       width: scroller.width
       spacing: Theme.em * 0.5
+      // without Qt Multimedia there is no sound: say so plainly, first, so it
+      // is in view whatever row the keyboard is on
+      Text {
+        objectName: "soundMissing"
+        visible: root.game.sound.missing
+        width: list.width
+        leftPadding: Theme.em
+        rightPadding: Theme.em
+        bottomPadding: Theme.em * 0.4
+        wrapMode: Text.WordWrap
+        text: qsTr("Sound is off because Qt Multimedia is not installed. Install the qt6-multimedia package to hear the game.")
+        color: Theme.gold
+        font.family: Theme.font
+        font.pixelSize: Theme.em * 0.95
+      }
 
       Repeater {
         model: root.rows.length
@@ -195,6 +212,8 @@ Item {
                 Board {
                   anchors.fill: parent
                   anchors.margins: Theme.em * 0.3
+                  // room for the label underneath
+                  anchors.bottomMargin: Theme.em * 1.3
                   enabled: false
                   pattern: choice.modelData
                   view: ({ columns: [[0, 1, 2], [1, 2, 0], [2, 0, 1], []], cap: 3, selected: -1, targets: [], solved: false })
@@ -202,6 +221,7 @@ Item {
                 Text {
                   anchors.bottom: parent.bottom
                   anchors.horizontalCenter: parent.horizontalCenter
+                  anchors.bottomMargin: Theme.em * 0.15
                   text: choice.modelData === "line" ? qsTr("Line") : qsTr("Circle")
                   color: Theme.ink
                   font.family: Theme.font

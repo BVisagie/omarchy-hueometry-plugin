@@ -13,6 +13,22 @@ Item {
   property real cy: 0
   property bool glowing: false
   readonly property var tone: Palette.orb(colour)
+  // the pillar's direction (degrees clockwise from up): a landing squashes
+  // the orb along it
+  property real axis: 0
+  property real squish: 0
+  transform: [
+    Rotation { origin.x: orb.size / 2; origin.y: orb.size / 2; angle: -orb.axis },
+    Scale { origin.x: orb.size / 2; origin.y: orb.size * 0.9; xScale: 1 + orb.squish; yScale: 1 - orb.squish },
+    Rotation { origin.x: orb.size / 2; origin.y: orb.size / 2; angle: orb.axis }
+  ]
+  function land() { if (!Theme.reducedMotion) squash.restart() }
+  readonly property bool squashing: squash.running
+  SequentialAnimation {
+    id: squash
+    NumberAnimation { target: orb; property: "squish"; to: 0.12; duration: Theme.ms(60); easing.type: Easing.OutQuad }
+    NumberAnimation { target: orb; property: "squish"; to: 0; duration: Theme.ms(280); easing.type: Easing.OutBack; easing.overshoot: 3 }
+  }
 
   width: size
   height: size

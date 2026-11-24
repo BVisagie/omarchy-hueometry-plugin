@@ -60,7 +60,8 @@ export function known(ref) {
 }
 
 export function start(p) {
-  return { puzzle: p, game: R.newGame(p.colours, p.cap, p.columns), selected: -1 };
+  // undone: the moves taken back, latest last, for redo
+  return { puzzle: p, game: R.newGame(p.colours, p.cap, p.columns), selected: -1, undone: [] };
 }
 
 // Resume a saved game: the same puzzle, with its moves replayed by the
@@ -95,7 +96,8 @@ export function touch(s, column) {
   const from = s.selected;
   const r = R.play(s.game, from, column);
   if (r.accepted) {
-    return { state: Object.assign({}, s, { game: r.game, selected: -1 }), effect: { kind: "move", from, to: column, bead: r.bead } };
+    // a new move forgets what was taken back
+    return { state: Object.assign({}, s, { game: r.game, selected: -1, undone: [] }), effect: { kind: "move", from, to: column, bead: r.bead } };
   }
   // the orb stays lifted, so the player can choose another column
   return { state: s, effect: { kind: "refuse", from, to: column, reason: r.reason } };
@@ -106,11 +108,33 @@ export function cancel(s) {
 }
 
 export function undo(s) {
-  return Object.assign({}, s, { game: R.undo(s.game), selected: -1 });
+  const moves = R.history(s.game);
+  if (moves.length === 0) return Object.assign({}, s, { selected: -1 });
+  const undone = (s.undone || []).concat([moves[moves.length - 1]]);
+  return Object.assign({}, s, { game: R.undo(s.game), selected: -1, undone });
+}
+
+// Plays the move taken back last, again. The engine decides it as any move:
+// answers { state, effect } like touch, with effect kind "none" when there
+// is nothing to redo (or the engine refuses, which a taken-back move cannot).
+export function redo(s) {
+  const undone = s.undone || [];
+  if (undone.length === 0 || R.solved(s.game)) return { state: s, effect: { kind: "none" } };
+  const m = undone[undone.length - 1];
+  const r = R.play(s.game, m.from, m.to);
+  if (!r.accepted) return { state: Object.assign({}, s, { undone: [] }), effect: { kind: "none" } };
+  return {
+    state: Object.assign({}, s, { game: r.game, selected: -1, undone: undone.slice(0, -1) }),
+    effect: { kind: "move", from: m.from, to: m.to, bead: r.bead },
+  };
+}
+
+export function canRedo(s) {
+  return !!s && (s.undone || []).length > 0;
 }
 
 export function restart(s) {
-  return Object.assign({}, s, { game: R.restart(s.game), selected: -1 });
+  return Object.assign({}, s, { game: R.restart(s.game), selected: -1, undone: [] });
 }
 
 export function hint(s) {

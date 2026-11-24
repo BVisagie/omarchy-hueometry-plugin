@@ -16,6 +16,7 @@ Shape {
     switch (kind) {
     case "back": return "M 62 18 L 30 50 L 62 82"
     case "undo": return "M 30 34 L 18 46 L 30 58 M 18 46 L 60 46 C 78 46 84 60 84 66 C 84 76 76 84 62 84 L 44 84"
+    case "redo": return "M 70 34 L 82 46 L 70 58 M 82 46 L 40 46 C 22 46 16 60 16 66 C 16 76 24 84 38 84 L 56 84"
     case "restart": return "M 76 40 A 30 30 0 1 0 80 62 M 78 22 L 78 42 L 58 42"
     case "hint": return "M 50 12 C 30 12 22 28 22 40 C 22 54 34 60 36 72 L 64 72 C 66 60 78 54 78 40 C 78 28 70 12 50 12 M 40 82 L 60 82 M 44 90 L 56 90"
     case "help": return "M 34 34 C 34 20 46 14 52 14 C 62 14 70 22 70 32 C 70 46 52 46 52 62 M 52 80 L 52 84"

@@ -3,7 +3,7 @@ import QtMultimedia
 
 // The sounds themselves (made by tools/audio/synth.py). Loaded by Sound.qml
 // only where Qt Multimedia is installed. Effects follow the sounds slider;
-// music and the area's ambience follow the music slider.
+// music, the area's ambience and its critters follow the music slider.
 Item {
   id: bank
   // silent until Sound.qml passes on the game's settings, in whatever order
@@ -16,6 +16,9 @@ Item {
   property real duck: 1.0
 
   readonly property var ambienceFor: ["forest", "forest", "river", "temple", "river", "temple", "forest"]
+  // the area's family: its ambience, its play theme and its critters
+  readonly property string family: ambienceFor[area] ?? "forest"
+  readonly property url themeSource: inPlay ? "sounds/music-" + family + ".ogg" : "sounds/music-menu.ogg"
 
   // a few players per sound, so quick moves do not cut each other off
   component Pool: Item {
@@ -40,6 +43,7 @@ Item {
   Pool { id: lift2; source: "sounds/lift-2.wav" }
   Pool { id: lift3; source: "sounds/lift-3.wav" }
   Repeater { id: places; model: 6; Pool { required property int index; source: "sounds/place-" + index + ".wav" } }
+  Repeater { id: completes; model: 6; Pool { required property int index; source: "sounds/complete-" + index + ".wav" } }
   Pool { id: drop; source: "sounds/drop.wav" }
   Pool { id: refuse; source: "sounds/refuse.wav" }
   Pool { id: undo; source: "sounds/undo.wav" }
@@ -50,16 +54,19 @@ Item {
 
   property int liftTurn: 0
 
+  // every effect plays at full level: the mix is set in the files
+  // (EFFECT_LUFS in tools/audio/synth.py, checked by tools/check/audio.py)
   function cue(name, arg) {
     switch (name) {
-    case "lift": [lift1, lift2, lift3][liftTurn++ % 3].play(0.8); break
-    case "place": places.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(0.9); break
-    case "drop": drop.play(0.7); break
+    case "lift": [lift1, lift2, lift3][liftTurn++ % 3].play(1.0); break
+    case "place": places.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(1.0); break
+    case "complete": completes.itemAt(Math.max(0, Math.min(5, arg % 6)))?.play(1.0); break
+    case "drop": drop.play(1.0); break
     case "refuse": refuse.play(1.0); break
-    case "undo": undo.play(0.8); break
-    case "restart": restart.play(0.8); break
-    case "hint": hint.play(0.8); break
-    case "select": select.play(0.6); break
+    case "undo": undo.play(1.0); break
+    case "restart": restart.play(1.0); break
+    case "hint": hint.play(1.0); break
+    case "select": select.play(1.0); break
     // the music steps back only for a fanfare that can be heard
     case "solved": solved.play(1.0); if (effects > 0) duckAnim.restart(); break
     }
@@ -75,7 +82,7 @@ Item {
 
   MediaPlayer {
     id: tune
-    source: bank.inPlay ? "sounds/music-play.ogg" : "sounds/music-menu.ogg"
+    source: bank.themeSource
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * bank.duck * 0.7 }
     onSourceChanged: if (bank.musicOn) play()
@@ -83,7 +90,7 @@ Item {
 
   MediaPlayer {
     id: air
-    source: bank.inPlay ? "sounds/ambience-" + bank.ambienceFor[bank.area] + ".ogg" : ""
+    source: bank.inPlay ? "sounds/ambience-" + bank.family + ".ogg" : ""
     loops: MediaPlayer.Infinite
     audioOutput: AudioOutput { volume: bank.music * 0.9 }
     onSourceChanged: if (bank.musicOn && source != "") play()
@@ -96,4 +103,47 @@ Item {
     if (musicOn) { tune.play(); if (air.source != "") air.play() }
     else { tune.pause(); air.pause() }
   }
+
+  // critters: a bird, a frog, a drip now and then, at random, so the
+  // ambience never sounds like a loop. Only while a puzzle is open and the
+  // music is on.
+  readonly property var crittersFor: ({
+    forest: ["bird-1", "bird-2", "bird-3", "bird-1"],
+    river: ["bird-2", "frog", "plop", "plop"],
+    temple: ["drip-1", "drip-2", "drip-1"],
+  })
+  readonly property bool crittersOn: critterClock.running
+  Timer {
+    id: critterClock
+    running: bank.musicOn && bank.inPlay
+    repeat: true
+    interval: 6000
+    // leaving the puzzle or turning the music off silences a critter at once
+    onRunningChanged: if (!running) { for (const v of bank.critterVoices) v.stop(); interval = 6000 }
+    onTriggered: {
+      const names = bank.crittersFor[bank.family] ?? []
+      const name = names[Math.floor(Math.random() * names.length)]
+      const voice = critterVoices.find(v => v.name === name)
+      if (voice) {
+        // near or far
+        voice.level = 0.45 + Math.random() * 0.55
+        voice.play()
+      }
+      interval = 4000 + Math.random() * 9000
+    }
+  }
+  readonly property var critterVoices: [bird1, bird2, bird3, frog, plop, drip1, drip2]
+  component Critter: SoundEffect {
+    property string name
+    property real level: 1
+    source: "sounds/critter-" + name + ".wav"
+    volume: bank.music * 0.9 * level
+  }
+  Critter { id: bird1; name: "bird-1" }
+  Critter { id: bird2; name: "bird-2" }
+  Critter { id: bird3; name: "bird-3" }
+  Critter { id: frog; name: "frog" }
+  Critter { id: plop; name: "plop" }
+  Critter { id: drip1; name: "drip-1" }
+  Critter { id: drip2; name: "drip-2" }
 }

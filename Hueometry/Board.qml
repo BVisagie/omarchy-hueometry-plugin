@@ -21,6 +21,8 @@ Item {
   signal touched(int column)
   signal cancelled()
   signal settled()
+  // a move just filled this pillar with one colour: its flower opened
+  signal opened(int column, int colour)
 
   readonly property int count: view ? view.columns.length : 0
   readonly property int cap: view ? view.cap : 1
@@ -44,7 +46,8 @@ Item {
     if (!view) { stack = []; bloomed = []; return }
     bloomExcept(view.selected)
     const cols = copy(view.columns)
-    if (view.selected >= 0 && cols[view.selected].length > 0) {
+    // (with no room to draw the board, nothing is lifted into view)
+    if (view.selected >= 0 && cols[view.selected].length > 0 && geom.columns[view.selected]) {
       const top = cols[view.selected].shift()
       flyer.colour = top
       flyer.place(Layout.liftedAt(geom.columns[view.selected], cap, unit))
@@ -55,14 +58,29 @@ Item {
     stack = cols
   }
 
-  onViewChanged: if (!busy) sync()
+  // the engine's completed pillars now and before the latest change: with
+  // no room to draw the board, a move's chime is decided from these
+  property var shownComplete: []
+  property var priorComplete: []
+  onViewChanged: {
+    priorComplete = shownComplete
+    shownComplete = view && view.complete ? view.complete : []
+    if (!busy) sync()
+  }
   onGeomChanged: if (!busy) sync()
 
   function topOf(cols, c) { return cols[c].length - 1 }
 
   // Plays what session.touch answered.
   function effect(e) {
-    if (!view || !geom.columns.length) return
+    if (!view) return
+    // an orb still in the air lands first (Play calls land() earlier still)
+    flyer.settle()
+    if (!geom.columns.length) {
+      // nothing to animate, but a filled pillar still rings
+      if (e.kind === "move" && shownComplete[e.to] && !priorComplete[e.to]) opened(e.to, e.bead)
+      return
+    }
     switch (e.kind) {
     case "lift": {
       const cols = copy(view.columns)
@@ -80,7 +98,7 @@ Item {
       bloomExcept(e.column)
       flyer.fly(Layout.liftedAt(geom.columns[e.column], cap, unit),
                 Layout.beadAt(geom.columns[e.column], cols[e.column].length - 1, unit), 0, Theme.ms(150),
-                function() { board.finish() })
+                function() { board.finish(e.column, false) })
       break
     }
     case "move": {
@@ -91,7 +109,7 @@ Item {
       flyer.colour = e.bead
       const a = geom.columns[e.from], b = geom.columns[e.to]
       flyer.fly(Layout.liftedAt(a, cap, unit), Layout.liftedAt(b, cap, unit), unit * 1.6, Theme.ms(260), function() {
-        flyer.fly(Layout.liftedAt(b, cap, unit), Layout.beadAt(b, cols[e.to].length - 1, unit), 0, Theme.ms(130), function() { board.finish() })
+        flyer.fly(Layout.liftedAt(b, cap, unit), Layout.beadAt(b, cols[e.to].length - 1, unit), 0, Theme.ms(130), function() { board.finish(e.to, true) })
       })
       break
     }
@@ -105,6 +123,11 @@ Item {
     }
   }
 
+  // land any orb still in the air, from the state it flew in: call before
+  // the session changes, so a pillar it filled opens even if the next touch
+  // lifts from that pillar
+  function land() { flyer.settle() }
+
   // drop any orb in the air and draw the engine's state (undo, restart)
   function stop() {
     flyer.stopFlight()
@@ -112,10 +135,30 @@ Item {
     sync()
   }
 
-  function finish() {
+  // an orb has landed on `column`; a move (not a put-back) whose landing
+  // opens that pillar's flower says so
+  function finish(column, moved) {
+    const before = bloomed.slice()
     busy = false
     sync()
     settled()
+    if (column === undefined || column < 0 || !stack[column] || !stack[column].length) return
+    if (moved && bloomed[column] && !before[column]) opened(column, stack[column][0])
+    // no room to draw the board: nothing to squash
+    if (geom.columns[column]) landed(column)
+  }
+
+  // the landed orb gives a little squash, and dust puffs from the stone
+  function landed(column) {
+    const k = stack[column].length - 1
+    // the column's top orb is the first of its row
+    const row = restingColumns.itemAt(column)
+    const orb = row ? row.orbs.itemAt(0) : null
+    if (orb) orb.land()
+    const g = geom.columns[column]
+    const at = Layout.beadAt(g, k, unit)
+    const a = g.angle * Math.PI / 180
+    dust.burst(at.x - Math.sin(a) * orbSize * 0.45, at.y + Math.cos(a) * orbSize * 0.45, g.angle)
   }
 
   // the medallion the circle's spokes grow from
@@ -183,25 +226,71 @@ Item {
     }
   }
 
-  // the orbs at rest
+  // the orbs at rest, a row per pillar: a row is rebuilt only when its own
+  // orbs change (its content is compared as text), so a landing orb keeps
+  // its squash while another pillar changes
   Repeater {
-    model: {
-      const out = []
-      for (let c = 0; c < board.stack.length && c < board.geom.columns.length; c++) {
-        const col = board.stack[c]
-        for (let i = 0; i < col.length; i++) out.push({ c, k: col.length - 1 - i, colour: col[i] })
+    id: restingColumns
+    model: Math.min(board.stack.length, board.geom.columns.length)
+    Item {
+      id: row
+      required property int index
+      readonly property string content: JSON.stringify(board.stack[index] || [])
+      readonly property var list: JSON.parse(content)
+      readonly property alias orbs: orbs
+      Repeater {
+        id: orbs
+        model: row.list
+        Orb {
+          required property int index
+          required property int modelData
+          readonly property int k: row.list.length - 1 - index
+          readonly property var at: Layout.beadAt(board.geom.columns[row.index], k, board.unit)
+          colour: modelData
+          size: board.orbSize
+          cx: at.x
+          cy: at.y
+          axis: board.geom.columns[row.index].angle
+          glowing: board.celebrating
+        }
       }
-      return out
     }
-    Orb {
-      required property var modelData
-      readonly property var at: Layout.beadAt(board.geom.columns[modelData.c], modelData.k, board.unit)
-      colour: modelData.colour
-      size: board.orbSize
-      cx: at.x
-      cy: at.y
-      glowing: board.celebrating
+  }
+
+  // a soft puff of dust where an orb lands, spreading along the stone
+  Item {
+    id: dust
+    z: 9
+    property real ax: 0
+    property real ay: 0
+    property real angle: 0
+    property real t: 1
+    visible: t < 1
+    function burst(x, y, angle) {
+      if (Theme.reducedMotion) return
+      ax = x; ay = y; dust.angle = angle
+      puff.restart()
     }
+    Repeater {
+      model: 6
+      Rectangle {
+        required property int index
+        readonly property real side: index % 2 ? 1 : -1
+        readonly property int ring: index >> 1
+        readonly property real a: dust.angle * Math.PI / 180
+        // across the pillar, and up it
+        readonly property real across: side * board.unit * (0.3 + ring * 0.22) * (0.35 + 0.65 * dust.t)
+        readonly property real up: board.unit * (0.04 + 0.22 * dust.t * (1 - 0.3 * ring))
+        width: board.unit * (0.14 + 0.16 * dust.t)
+        height: width
+        radius: width / 2
+        x: dust.ax + Math.cos(a) * across + Math.sin(a) * up - width / 2
+        y: dust.ay + Math.sin(a) * across - Math.cos(a) * up - height / 2
+        color: "#E8E2C8"
+        opacity: 0.42 * (1 - dust.t) * (1 - ring * 0.25)
+      }
+    }
+    NumberAnimation { id: puff; target: dust; property: "t"; from: 0; to: 1; duration: Theme.ms(480); easing.type: Easing.OutCubic }
   }
 
   // the orb in the air: lifted, flying, or settling
@@ -230,6 +319,16 @@ Item {
     }
     function wobble() { wobbleAnim.restart() }
     function stopFlight() { flight.stop(); after = null }
+    // run the rest of the flight at once: a move's second leg, then its
+    // landing (a few steps at most)
+    function settle() {
+      for (let i = 0; i < 4 && flight.running && after; i++) {
+        const next = after
+        after = null
+        flight.stop()
+        next()
+      }
+    }
 
     NumberAnimation {
       id: flight

@@ -240,7 +240,11 @@ Item {
     if (event.isAutoRepeat && !moving) { event.accepted = true; return }
     // a modifier alone (Shift for ?) neither closes nor opens anything
     if ([Qt.Key_Shift, Qt.Key_Control, Qt.Key_Alt, Qt.Key_Meta, Qt.Key_Super_L, Qt.Key_Super_R, Qt.Key_AltGr].indexOf(event.key) >= 0) return
-    if (helpShown) { helpShown = false; event.accepted = true; return }
+    if (helpShown) {
+      if (!help.scroll(event)) helpShown = false
+      event.accepted = true
+      return
+    }
     if (event.key === Qt.Key_Question || (event.key === Qt.Key_Slash && (event.modifiers & Qt.ShiftModifier))) { helpShown = true; event.accepted = true; return }
     if (event.key === Qt.Key_F11 && host && host.canFullscreen) { host.toggleFullscreen(); event.accepted = true; return }
     if (event.key === Qt.Key_Q && !(event.modifiers & Qt.ControlModifier)) {
@@ -274,6 +278,7 @@ Item {
   Component { id: playScreen; Play { game: root } }
 
   Help {
+    id: help
     anchors.fill: parent
     quitsAtOnce: !!root.host && root.host.kind === "plugin"
     visible: root.helpShown

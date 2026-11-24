@@ -15,7 +15,7 @@ Item {
   signal activated()
 
   width: size
-  height: size + (label !== "" ? Theme.em * 1.3 : 0)
+  height: size + (label !== "" ? Theme.em * 1.4 : 0)
   opacity: enabled ? 1 : 0.4
 
   property real holdProgress: 0
@@ -61,7 +61,7 @@ Item {
     text: root.label
     color: Theme.ink
     font.family: Theme.font
-    font.pixelSize: Theme.em * 0.85
+    font.pixelSize: Theme.em * 0.92
     style: Text.Raised
     styleColor: "#80000000"
   }
